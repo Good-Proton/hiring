@@ -1,0 +1,45 @@
+{
+  "name": "@linkedhelper/hiring",
+  "version": "0.0.1",
+  "description": "Linked Helper hiring test",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "clear": "rimraf dist/",
+    "build": "npm run clear && tsc",
+    "prepublish": "npm run build",
+    "test": "tap --reporter=spec test/*.spec.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Good-Proton/hiring.git"
+  },
+  "keywords": [
+    "linkedhelper"
+  ],
+  "author": {
+    "name": "Vyacheslav Dorzhiev",
+    "email": "contact@vyacheslavdorzhiev.pro",
+    "web": "https://github.com/Good-Proton/hiring.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Good-Proton/hiring.git/issues"
+  },
+  "homepage": "https://github.com/Good-Proton/hiring.git#readme",
+  "devDependencies": {
+    "@types/node": "^10.12.18",
+    "@types/sinon": "^7.0.5",
+    "rimraf": "^2.6.3",
+    "sinon": "^7.2.3",
+    "tap": "git+https://github.com/Good-Proton/node-tap.git",
+    "tap-spec": "^5.0.0",
+    "ts-node": "^8.0.2",
+    "typescript": "^3.2.2"
+  },
+  "dependencies": {}
+}

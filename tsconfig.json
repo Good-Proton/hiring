@@ -1,0 +1,31 @@
+{
+    "compilerOptions": {
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "declaration": true,
+        "sourceMap": true,
+        "module": "esnext",
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "outDir": "./dist",
+        "target": "esnext",
+        "typeRoots": [
+            "./node_modules/@types",
+            "./typings"
+        ],
+        "paths": {
+            "*": [
+                "*",
+                "./node_modules/@types",
+                "./typings"
+            ]
+        },
+        "baseUrl": "."
+    },
+    "include": [
+        "src/**/*.ts",
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}
