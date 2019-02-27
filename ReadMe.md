@@ -26,7 +26,7 @@ async function run(queue: Queue, maxThreads = 0): Promise<{...}>
 * Например, если мы вызовем  
   ```
   executor.executeTask({ targetId: 0, action: 'init' });
-  executor.executeTask({ targetId: 1, action: 'prepare' });
+  executor.executeTask({ targetId: 0, action: 'prepare' });
   ```  
   то, второй вызов кинет исключение.
 
@@ -48,8 +48,10 @@ async function run(queue: Queue, maxThreads = 0): Promise<{...}>
 `npm install`
 
 ## Разработка решения
-Заготовка для функции `run()` лежит в `./src/run.ts`. Обвязочный код (инициализация `executor` и возрат отчета) менять не надо.
-Никакие другие файлы, кроме `./src/run.ts` менять нельзя.
+* Заготовка для функции `run()` лежит в `./src/run.ts`. 
+* Обвязочный код (строчки `12-13, 20-24`инициализация `executor` и возрат отчета) менять нельзя
+* Никакие другие файлы, кроме `./src/run.ts` менять нельзя. 
+* Внутри одного вызова `run()` создавать дополнительные эксземпляры `Executor` нельзя.
 
 ## Самостоятельная проверка правильности решения
 
