@@ -14,7 +14,7 @@ export default async function run(queue: Queue, maxThreads = 0)
 
     /**
      * Код надо писать сюда
-     * Тут что-то делаем c queue и вызываем в правильном порядке executor.executeTask
+     * Тут что-то вызываем в правильном порядке executor.executeTask для тасков из очереди queue
      */
 
     executor.stop();
