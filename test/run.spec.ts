@@ -101,7 +101,7 @@ t.test('run() with 5 max threads', async t => {
         'all tasks completed in proper order');
 
     t.equal(performance.max, 5,
-        '`performance.max` should be `10` (' + performance.max + ')');
+        '`performance.max` should be `5` (' + performance.max + ')');
     t.ok(performance.avg > 4,
-        '`performance.avg` should be greter than `9` (' + performance.avg + ')');
+        '`performance.avg` should be greter than `4` (' + performance.avg + ')');
 });
