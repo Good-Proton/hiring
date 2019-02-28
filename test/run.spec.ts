@@ -46,7 +46,7 @@ const wantedResult = {
 };
 
 t.test('run() without threads limit', async t => {
-    const result = await run(queue);
+    const result = await run(queue.slice());
     const completed = result.completed;
     const performance = result.performance;
 
@@ -62,7 +62,7 @@ t.test('run() without threads limit', async t => {
 
 
 t.test('run() with 2 max threads', async t => {
-    const result = await run(queue, 2);
+    const result = await run(queue.slice(), 2);
     const completed = result.completed;
     const performance = result.performance;
 
@@ -77,7 +77,7 @@ t.test('run() with 2 max threads', async t => {
 });
 
 t.test('run() with 3 max threads', async t => {
-    const result = await run(queue, 3);
+    const result = await run(queue.slice(), 3);
     const completed = result.completed;
     const performance = result.performance;
 
@@ -92,7 +92,7 @@ t.test('run() with 3 max threads', async t => {
 });
 
 t.test('run() with 5 max threads', async t => {
-    const result = await run(queue, 5);
+    const result = await run(queue.slice(), 5);
     const completed = result.completed;
     const performance = result.performance;
 
