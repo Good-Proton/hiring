@@ -57,7 +57,7 @@ t.test('run() without threads limit', async t => {
     t.equal(performance.max, 10,
         '`performance.max` should be `10` (equal to number of distinct `targetId`) (' + performance.max + ')');
     t.ok(performance.avg > 9,
-        '`performance.avg` should be greter than `9` (close to number of distinct `targetId`) (' + performance.avg + ')');
+        '`performance.avg` should be greater than `9` (close to number of distinct `targetId`) (' + performance.avg + ')');
 });
 
 
@@ -73,7 +73,7 @@ t.test('run() with 2 max threads', async t => {
     t.equal(performance.max, 2,
         '`performance.max` should be `2` (' + performance.max + ')');
     t.ok(performance.avg > 1.5,
-        '`performance.avg` should be greter than `1.5` (' + performance.avg + ')');
+        '`performance.avg` should be greater than `1.5` (' + performance.avg + ')');
 });
 
 t.test('run() with 3 max threads', async t => {
@@ -88,7 +88,7 @@ t.test('run() with 3 max threads', async t => {
     t.equal(performance.max, 3,
         '`performance.max` should be `3` (' + performance.max + ')');
     t.ok(performance.avg > 2,
-        '`performance.avg` should be greter than `2` (' + performance.avg + ')');
+        '`performance.avg` should be greater than `2` (' + performance.avg + ')');
 });
 
 t.test('run() with 5 max threads', async t => {
@@ -103,5 +103,42 @@ t.test('run() with 5 max threads', async t => {
     t.equal(performance.max, 5,
         '`performance.max` should be `5` (' + performance.max + ')');
     t.ok(performance.avg > 4,
-        '`performance.avg` should be greter than `4` (' + performance.avg + ')');
+        '`performance.avg` should be greater than `4` (' + performance.avg + ')');
 });
+
+/* t.test('[Bonus] run() with 2 threads on modifying queue', async t => {
+    const q0: Task[] = ['init', 'prepare', 'work', 'finalize', 'cleanup'].map(action => <Task>{ targetId: 0, action });
+    const q1: Task[] = ['init', 'prepare', 'work', 'finalize', 'cleanup'].map(action => <Task>{ targetId: 1, action });
+    const q2: Task[] = ['init', 'prepare', 'work', 'finalize', 'cleanup'].map(action => <Task>{ targetId: 2, action });
+    const q3: Task[] = ['init', 'prepare', 'work', 'finalize', 'cleanup'].map(action => <Task>{ targetId: 3, action });
+    const q4: Task[] = ['init', 'prepare', 'work', 'finalize', 'cleanup'].map(action => <Task>{ targetId: 4, action });
+    const q5: Task[] = ['init', 'prepare', 'work', 'finalize', 'cleanup'].map(action => <Task>{ targetId: 5, action });
+    const q6: Task[] = ['init', 'prepare', 'work', 'finalize', 'cleanup'].map(action => <Task>{ targetId: 6, action });
+    const q7: Task[] = ['init', 'prepare', 'work', 'finalize', 'cleanup'].map(action => <Task>{ targetId: 7, action });
+    const q8: Task[] = ['init', 'prepare', 'work', 'finalize', 'cleanup'].map(action => <Task>{ targetId: 8, action });
+    const q9: Task[] = ['init', 'prepare', 'work', 'finalize', 'cleanup'].map(action => <Task>{ targetId: 9, action });
+
+    const queue: Task[] = [
+        ...q0, ...q1, ...q2
+    ];
+
+    q0[0]._onComplete = () => queue.push(...q3);
+    q1[1]._onComplete = () => queue.push(...q4);
+    q2[2]._onComplete = () => queue.push(...q5);
+    q3[3]._onComplete = () => queue.push(...q6);
+    q4[4]._onComplete = () => queue.push(...q7);
+    q5[4]._onComplete = () => queue.push(...q8, ...q9);
+
+    const result = await run(queue, 2);
+    const completed = result.completed;
+    const performance = result.performance;
+
+    t.pass('run() executed sucessfully');
+    t.match(completed, wantedResult,
+        'all tasks completed in proper order');
+
+    t.equal(performance.max, 2,
+        '`performance.max` should be `2` (' + performance.max + ')');
+    t.ok(performance.avg > 1.5,
+        '`performance.avg` should be greater than `1.5` (' + performance.avg + ')');
+}); */
