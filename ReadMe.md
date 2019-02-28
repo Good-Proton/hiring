@@ -32,10 +32,15 @@ async function run(queue: Queue, maxThreads = 0): Promise<{...}>
 
 * При этом  
   ```
-  await executor.executeTask({ targetId: 0, action: 'init' });
-  await executor.executeTask({ targetId: 1, action: 'prepare' });
+  executor.executeTask({ targetId: 0, action: 'init' });
+  executor.executeTask({ targetId: 1, action: 'prepare' });
   ```  
-  отработает нормально.
+  или
+  ```
+  await executor.executeTask({ targetId: 0, action: 'init' });
+  await executor.executeTask({ targetId: 0, action: 'prepare' });
+  ```  
+  отработают нормально.
 
 Все задачи для одного и того же `Task.targetId` должны быть исполнены последовательно в том порядке, в котором они находятся в очереди.
 
