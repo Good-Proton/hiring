@@ -84,13 +84,6 @@ export default class Executor {
         running[targetId] = task;
         this.deferRecordPerformance();
 
-        /* console.log(`${Object.keys(running).length} tasks running:`,
-            Object.keys(running).reduce((records: string[], targetId: string) => {
-                const task = running[targetId];
-                records.push(`${task.targetId}:${task.action}`);
-                return records;
-            }, [])
-        ); */
 
         switch(task.action) {
             case 'init': {
@@ -116,18 +109,13 @@ export default class Executor {
         }
 
         delete running[targetId];
+        if(task._onComplete) {
+            task._onComplete();
+        }
         if(!completed[targetId]) {
             completed[targetId] = [];
         }
         completed[targetId].push(task);
-
-        /* console.log(`${Object.keys(running).length} tasks running:`,
-            Object.keys(running).reduce((records: string[], targetId: string) => {
-                const task = running[targetId];
-                records.push(`${task.targetId}:${task.action}`);
-                return records;
-            }, [])
-        ); */
     }
 
     readonly executeData: {
