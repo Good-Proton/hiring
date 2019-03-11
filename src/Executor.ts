@@ -4,7 +4,7 @@ export interface TaskCollection {
     [targetId: string]: Task
 }
 
-export interface CompletedTasksColleciton {
+export interface CompletedTasksCollection {
     [targetId: string]: Task[]
 }
 
@@ -120,7 +120,7 @@ export default class Executor {
 
     readonly executeData: {
         running: TaskCollection
-        completed: CompletedTasksColleciton
+        completed: CompletedTasksCollection
         performanceData: {
             running: Task[]
         }[]
