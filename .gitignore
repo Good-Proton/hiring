@@ -4,3 +4,4 @@ npm-debug.log
 poc.js
 .rpt2_cache/
 dist/
+.nyc_output/

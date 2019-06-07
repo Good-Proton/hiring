@@ -1,31 +1,36 @@
 {
     "compilerOptions": {
+        "target": "es2017",
+
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true,
-        "declaration": true,
-        "sourceMap": true,
-        "module": "esnext",
+        "moduleResolution": "node",
+        "alwaysStrict": true,
         "noImplicitAny": true,
         "strictNullChecks": true,
+        "strictPropertyInitialization": true,
+        "strictBindCallApply": true,
+        "forceConsistentCasingInFileNames": true,
+
         "outDir": "./dist",
-        "target": "esnext",
+        "module": "commonjs",
+        "declaration": true,
+        "sourceMap": true,
+        "resolveJsonModule": true,
         "typeRoots": [
-            "./node_modules/@types",
-            "./typings"
+            "node_modules/@types",
+            "typings"
         ],
-        "paths": {
-            "*": [
-                "*",
-                "./node_modules/@types",
-                "./typings"
-            ]
-        },
-        "baseUrl": "."
+        
+        "plugins": [
+            {
+                "name": "typescript-tslint-plugin",
+                "alwaysShowRuleFailuresAsWarnings": true,
+                "suppressWhileTypeErrorsPresent": false
+            }
+        ]
     },
     "include": [
-        "src/**/*.ts",
-    ],
-    "exclude": [
-        "node_modules"
+        "src"
     ]
 }

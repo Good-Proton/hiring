@@ -9,6 +9,12 @@ declare module 'tap' {
         plan(n: number, comment?: string): void
         test(name: string, extra?: Options.Test, cb?: (t: Test) => Promise<any> | void): TestPromise
         test(name: string, cb?: (t: Test) => Promise<any> | void): TestPromise
+        todo(name: string, extra?: Options.Test, cb?: (t: Test) => Promise<any> | void): TestPromise
+        todo(name: string, cb?: (t: Test) => Promise<any> | void): TestPromise
+        skip(name: string, extra?: Options.Test, cb?: (t: Test) => Promise<any> | void): TestPromise
+        skip(name: string, cb?: (t: Test) => Promise<any> | void): TestPromise
+        only(name: string, extra?: Options.Test, cb?: (t: Test) => Promise<any> | void): TestPromise
+        only(name: string, cb?: (t: Test) => Promise<any> | void): TestPromise
         current(): Test
         stdin(name: string, extra?: Options.Bag): TestPromise
         spawn(cmd: string, args: string, options?: Options.Bag, name?: string, extra?: Options.Spawn): TestPromise
@@ -128,7 +134,7 @@ declare module 'tap' {
         resolveMatch: Assertions.ResolveMatch
     }
 
-    namespace Assertions {
+    export namespace Assertions {
         type AsyncFn = ((...args: any[]) => Promise<any>) | Promise<any>
         type ExpectedError = (new (...args: any[]) => Error) | Pattern
         type Pattern = RegExp | string | object
@@ -164,13 +170,13 @@ declare module 'tap' {
             (fn: AsyncFn, expectedError?: ExpectedError, message?: string, extra?: Options.Assert) => Promise<any>
     }
 
-    namespace Options {
+    export namespace Options {
         export interface Bag {
-            [ propName: string ]: any
+            [propName: string]: any
         }
 
         export interface Pragma {
-            [ propName: string ]: boolean
+            [propName: string]: boolean
         }
 
         export interface Assert extends Bag {
@@ -193,13 +199,13 @@ declare module 'tap' {
     }
 
     // Super minimal description of returned Promise (which are really Bluebird promises)
-    interface TestPromise {
-        [ propName: string ]: any
+    export interface TestPromise {
+        [propName: string]: any
         then(fn: (t: Test) => any): Promise<any>
         catch(fn: (err: Error) => any): Promise<any>
     }
 
-    interface Mocha {
+    export interface Mocha {
         it: (name?: string, fn?: (a: any) => any) => void
         describe: (name?: string, fn?: (a: any) => any) => void
         global: () => void
@@ -207,7 +213,7 @@ declare module 'tap' {
         before(cb: (t: Test) => Promise<any> | void): TestPromise
     }
 
-    interface Tap extends Test {
+    export interface Tap extends Test {
         Test: {
             new(options?: Options.Test): Test
             prototype: Test

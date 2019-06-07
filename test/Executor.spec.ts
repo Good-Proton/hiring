@@ -4,7 +4,7 @@ import Task from '../src/Task';
 
 t.test('Executor.executeTask()', async t => {
     const executor = new Executor();
-    executor.start()
+    executor.start();
 
     const init0Task: Task = { targetId: 0, action: 'init' };
     const init0Promise = executor.executeTask(init0Task);
@@ -12,7 +12,7 @@ t.test('Executor.executeTask()', async t => {
         '`executor.executeTask(init0Task)` places task into `executor.executeData.running`');
     
     await init0Promise;
-    t.same(executor.executeData.running, {},
+    t.same(executor.executeData.running, { },
         'after execution of all tasks `executor.executeData.running` is empty');
     t.same(executor.executeData.completed, { [init0Task.targetId]: [init0Task] },
         'executed `init0Task` is placed into `executor.executeData.completed`');
@@ -46,7 +46,7 @@ t.test('Executor.executeTask()', async t => {
 
 t.test('Executor.performanceReport for 4 simultaneous tasks', async t => {
     const executor = new Executor();
-    executor.start()
+    executor.start();
 
     const init0Task: Task = { targetId: 0, action: 'init' };
     const init1Task: Task = { targetId: 1, action: 'init' };
@@ -72,7 +72,7 @@ t.test('Executor.performanceReport for 4 simultaneous tasks', async t => {
 
 t.test('Executor.performanceReport for 3 simultaneous tasks + 2 simulataneous tasks after', async t => {
     const executor = new Executor();
-    executor.start()
+    executor.start();
 
     const init0Task: Task = { targetId: 0, action: 'init' };
     const init1Task: Task = { targetId: 1, action: 'init' };

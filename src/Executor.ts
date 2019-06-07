@@ -1,34 +1,45 @@
 import Task from './Task';
 
-export interface TaskCollection {
+export interface ITaskCollection {
     [targetId: string]: Task
 }
 
-export interface CompletedTasksCollection {
+export interface ICompletedTasksCollection {
     [targetId: string]: Task[]
 }
 
-export interface PerformanceReport {
+export interface IPerformanceReport {
     min: number
     max: number
     avg: number
 }
 
 export default class Executor {
+    public readonly executeData: {
+        running: ITaskCollection
+        completed: ICompletedTasksCollection
+        performanceData: Array<{
+            running: Task[]
+        }>
+    };
+
+    public readonly performanceReport: IPerformanceReport;
+
     constructor() {
         this.executeData = {
             running: {},
             completed: {},
             performanceData: []
         };
+
         this.performanceReport = {
             min: 0,
             max: 0,
             avg: 0
-        }
+        };
     }
 
-    start() {
+    public start() {
         this.executeData.running = {};
         this.executeData.completed = {};
         this.executeData.performanceData.length = 0;
@@ -39,19 +50,21 @@ export default class Executor {
         this.interval = setInterval(() => this.recordPerformance.bind(this), 10);
     }
 
-    stop() {
-        if(this.interval) {
+    public stop() {
+        // istanbul ignore if
+        if (this.interval) {
             clearInterval(this.interval);
             this.interval = undefined;
         }
-        if(this.timeout) {
+        // istanbul ignore if
+        if (this.timeout) {
             clearTimeout(this.timeout);
             this.timeout = undefined;
         }
 
         this.performanceReport.min =
             this.executeData.performanceData.reduce((min: number, record: { running: Task[] }) => {
-                if(record.running.length < min) {
+                if (record.running.length < min) {
                     return record.running.length;
                 }
                 return min;
@@ -59,7 +72,7 @@ export default class Executor {
 
         this.performanceReport.max =
             this.executeData.performanceData.reduce((max: number, record: { running: Task[] }) => {
-                if(record.running.length > max) {
+                if (record.running.length > max) {
                     return record.running.length;
                 }
                 return max;
@@ -71,12 +84,12 @@ export default class Executor {
             }, 0);
     }
 
-    async executeTask(task: Task) {
+    public async executeTask(task: Task) {
         const running = this.executeData.running;
         const completed = this.executeData.completed;
         const targetId = task.targetId;
 
-        if(running[targetId]) {
+        if (running[targetId]) {
             throw new Error(`cannot execute task ${targetId}:` +
                 `${task.action}: task with the same targetId=${targetId} is running`);
         }
@@ -84,8 +97,7 @@ export default class Executor {
         running[targetId] = task;
         this.deferRecordPerformance();
 
-
-        switch(task.action) {
+        switch (task.action) {
             case 'init': {
                 await sleep(100);
                 break;
@@ -109,24 +121,14 @@ export default class Executor {
         }
 
         delete running[targetId];
-        if(task._onComplete) {
+        if (task._onComplete) {
             task._onComplete();
         }
-        if(!completed[targetId]) {
+        if (!completed[targetId]) {
             completed[targetId] = [];
         }
         completed[targetId].push(task);
     }
-
-    readonly executeData: {
-        running: TaskCollection
-        completed: CompletedTasksCollection
-        performanceData: {
-            running: Task[]
-        }[]
-    }
-
-    readonly performanceReport: PerformanceReport
 
     private recordPerformance() {
         this.executeData.performanceData.push({
@@ -136,7 +138,7 @@ export default class Executor {
     }
 
     private deferRecordPerformance() {
-        if(this.timeout) {
+        if (this.timeout) {
             clearTimeout(this.timeout);
         }
         this.timeout = setTimeout(this.recordPerformance.bind(this), 0);
@@ -146,6 +148,7 @@ export default class Executor {
     private timeout?: NodeJS.Timeout;
 }
 
-async function sleep(ms: number = 0) {
+async function sleep(ms: number) {
+    ms = Math.max(0, ms);
     return new Promise<void>(r => setTimeout(() => r(), ms));
 }

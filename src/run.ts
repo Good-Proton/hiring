@@ -1,14 +1,13 @@
+import Executor, { ICompletedTasksCollection, IPerformanceReport } from './Executor';
 import Task from './Task';
-import Executor, { CompletedTasksColleciton, PerformanceReport } from './Executor';
 
-type Queue = Task[];
-
-export default async function run(queue: Queue, maxThreads = 0)
+export default async function run(queue: Iterable<Task>, maxThreads = 0)
     : Promise<{
-        completed: CompletedTasksColleciton
-        performance: PerformanceReport
+        completed: ICompletedTasksCollection
+        performance: IPerformanceReport
     }>
 {
+    maxThreads = Math.max(0, maxThreads);
     const executor = new Executor();
     executor.start();
 
