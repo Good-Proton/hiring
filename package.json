@@ -1,6 +1,6 @@
 {
   "name": "@linkedhelper/hiring",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Linked Helper hiring test",
   "main": "dist/index.js",
   "module": "dist/index.js",
