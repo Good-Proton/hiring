@@ -1,8 +1,10 @@
 import t from 'tap';
 import run from '../src/run';
-import Task from '../src/Task';
+import ITask, { ActionType } from '../src/Task';
 
-const queue: Task[] = [
+type TaskExt = ITask & { completed?: true };
+
+const queue: ITask[] = [
     { targetId: 4, action: 'init' }, { targetId: 0, action: 'init' }, { targetId: 1, action: 'init' },
     { targetId: 6, action: 'init' }, { targetId: 1, action: 'prepare' }, { targetId: 8, action: 'init' },
     { targetId: 6, action: 'prepare' }, { targetId: 2, action: 'init' }, { targetId: 0, action: 'prepare' },
@@ -45,8 +47,33 @@ const wantedResult = {
     { targetId: 9, action: 'finalize' }, { targetId: 9, action: 'cleanup' }],
 };
 
+function getQueue() {
+    const q = queue.map(t => {
+        const item: TaskExt = { ...t };
+        item._onComplete = () => item.completed = true;
+        return item;
+    });
+
+    return {
+        [Symbol.iterator]() {
+            let i = 0;
+            return {
+                next() {
+                    while (q[i] && q[i].completed) {
+                        i++;
+                    }
+                    return {
+                        done: i >= q.length,
+                        value: q[i++]
+                    };
+                }
+            };
+        }
+    };
+}
+
 t.test('run() without threads limit', async t => {
-    const result = await run(queue.slice());
+    const result = await run(getQueue());
     const completed = result.completed;
     const performance = result.performance;
 
@@ -61,7 +88,7 @@ t.test('run() without threads limit', async t => {
 });
 
 t.test('run() with 2 max threads', async t => {
-    const result = await run(queue.slice(), 2);
+    const result = await run(getQueue(), 2);
     const completed = result.completed;
     const performance = result.performance;
 
@@ -76,7 +103,7 @@ t.test('run() with 2 max threads', async t => {
 });
 
 t.test('run() with 3 max threads', async t => {
-    const result = await run(queue.slice(), 3);
+    const result = await run(getQueue(), 3);
     const completed = result.completed;
     const performance = result.performance;
 
@@ -91,7 +118,7 @@ t.test('run() with 3 max threads', async t => {
 });
 
 t.test('run() with 5 max threads', async t => {
-    const result = await run(queue.slice(), 5);
+    const result = await run(getQueue(), 5);
     const completed = result.completed;
     const performance = result.performance;
 
@@ -106,27 +133,69 @@ t.test('run() with 5 max threads', async t => {
 });
 
 t.test('run() with 2 threads on modifying queue', async t => {
-    const q0 = ['init', 'prepare', 'work', 'finalize', 'cleanup'].map(action => ({ targetId: 0, action })) as Task[];
-    const q1 = ['init', 'prepare', 'work', 'finalize', 'cleanup'].map(action => ({ targetId: 1, action })) as Task[];
-    const q2 = ['init', 'prepare', 'work', 'finalize', 'cleanup'].map(action => ({ targetId: 2, action })) as Task[];
-    const q3 = ['init', 'prepare', 'work', 'finalize', 'cleanup'].map(action => ({ targetId: 3, action })) as Task[];
-    const q4 = ['init', 'prepare', 'work', 'finalize', 'cleanup'].map(action => ({ targetId: 4, action })) as Task[];
-    const q5 = ['init', 'prepare', 'work', 'finalize', 'cleanup'].map(action => ({ targetId: 5, action })) as Task[];
-    const q6 = ['init', 'prepare', 'work', 'finalize', 'cleanup'].map(action => ({ targetId: 6, action })) as Task[];
-    const q7 = ['init', 'prepare', 'work', 'finalize', 'cleanup'].map(action => ({ targetId: 7, action })) as Task[];
-    const q8 = ['init', 'prepare', 'work', 'finalize', 'cleanup'].map(action => ({ targetId: 8, action })) as Task[];
-    const q9 = ['init', 'prepare', 'work', 'finalize', 'cleanup'].map(action => ({ targetId: 9, action })) as Task[];
+    const tasks: TaskExt[][] = [];
+    for (const i of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]) {
+        tasks[i] = [];
+        for (const action of ['init', 'prepare', 'work', 'finalize', 'cleanup']) {
+            tasks[i].push({
+                targetId: i,
+                action: action as ActionType,
+                _onComplete() {
+                    this.completed = true;
+                }
+            });
+        }
+    }
 
-    const queue = [
-        ...q0, ...q1, ...q2
+    const q = [
+        ...tasks[0], ...tasks[1], ...tasks[2]
     ];
 
-    q0[0]._onComplete = () => queue.push(...q3);
-    q1[1]._onComplete = () => queue.push(...q4);
-    q2[2]._onComplete = () => queue.push(...q5);
-    q3[3]._onComplete = () => queue.push(...q6);
-    q4[4]._onComplete = () => queue.push(...q7);
-    q5[4]._onComplete = () => queue.push(...q8, ...q9);
+    tasks[0][0]._onComplete = () => {
+        q.push(...tasks[3]);
+        tasks[0][0].completed = true;
+    };
+    tasks[1][1]._onComplete = () => {
+        q.push(...tasks[4]);
+        tasks[1][1].completed = true;
+    };
+    tasks[2][2]._onComplete = () => {
+        q.push(...tasks[5]);
+        tasks[2][2].completed = true;
+    };
+    tasks[3][3]._onComplete = () => {
+        q.push(...tasks[6]);
+        tasks[3][3].completed = true;
+    };
+    tasks[4][4]._onComplete = () => {
+        q.push(...tasks[7]);
+        tasks[4][4].completed = true;
+    };
+    tasks[5][4]._onComplete = () => {
+        q.push(...tasks[8]);
+        tasks[5][4].completed = true;
+    };
+    tasks[8][4]._onComplete = () => {
+        q.push(...tasks[9]);
+        tasks[8][4].completed = true;
+    };
+
+    const queue = {
+        [Symbol.iterator]() {
+            let i = 0;
+            return {
+                next() {
+                    while (q[i] && q[i].completed) {
+                        i++;
+                    }
+                    return {
+                        done: i >= q.length,
+                        value: q[i++]
+                    };
+                }
+            };
+        }
+    };
 
     const result = await run(queue, 2);
     const completed = result.completed;
@@ -145,31 +214,32 @@ t.test('run() with 2 threads on modifying queue', async t => {
 t.test('run() with 3 threads on infinite queue', async t => {
     const queue = {
         [Symbol.iterator]() {
-            let targetId = 0;
-            let completed = 0;
+            let currentTargetId = 0;
             return {
                 next() {
-                    if (completed < 2) {
+                    if (queue.completed.length < 2) {
+                        while (queue.completed.indexOf(currentTargetId) != -1) {
+                            currentTargetId++;
+                        }
+                        const targetId = currentTargetId++;
                         return {
                             done: false,
                             value: {
-                                targetId: targetId++,
+                                targetId,
                                 action: 'init' as const,
-                                _onComplete() { completed++; }
+                                _onComplete() { queue.completed.push(targetId); }
                             }
                         };
                     } else {
                         return {
                             done: true,
-                            value: {
-                                targetId,
-                                action: 'init' as const
-                            }
+                            value: undefined as unknown as ITask
                         };
                     }
                 }
             };
-        }
+        },
+        completed: [] as number[]
     };
 
     const result = await run(queue, 3);

@@ -1,11 +1,11 @@
-import Task from './Task';
+import ITask from './Task';
 
 export interface ITaskCollection {
-    [targetId: string]: Task
+    [targetId: string]: ITask
 }
 
 export interface ICompletedTasksCollection {
-    [targetId: string]: Task[]
+    [targetId: string]: ITask[]
 }
 
 export interface IPerformanceReport {
@@ -19,7 +19,7 @@ export default class Executor {
         running: ITaskCollection
         completed: ICompletedTasksCollection
         performanceData: Array<{
-            running: Task[]
+            running: ITask[]
         }>
     };
 
@@ -63,7 +63,7 @@ export default class Executor {
         }
 
         this.performanceReport.min =
-            this.executeData.performanceData.reduce((min: number, record: { running: Task[] }) => {
+            this.executeData.performanceData.reduce((min: number, record: { running: ITask[] }) => {
                 if (record.running.length < min) {
                     return record.running.length;
                 }
@@ -71,7 +71,7 @@ export default class Executor {
             }, Number.MAX_SAFE_INTEGER);
 
         this.performanceReport.max =
-            this.executeData.performanceData.reduce((max: number, record: { running: Task[] }) => {
+            this.executeData.performanceData.reduce((max: number, record: { running: ITask[] }) => {
                 if (record.running.length > max) {
                     return record.running.length;
                 }
@@ -79,12 +79,12 @@ export default class Executor {
             }, 0);
 
         this.performanceReport.avg =
-            this.executeData.performanceData.reduce((avg: number, record: { running: Task[] }, index: number) => {
+            this.executeData.performanceData.reduce((avg: number, record: { running: ITask[] }, index: number) => {
                 return (avg * index + record.running.length) / (index + 1);
             }, 0);
     }
 
-    public async executeTask(task: Task) {
+    public async executeTask(task: ITask) {
         const running = this.executeData.running;
         const completed = this.executeData.completed;
         const targetId = task.targetId;
@@ -127,7 +127,7 @@ export default class Executor {
         if (!completed[targetId]) {
             completed[targetId] = [];
         }
-        completed[targetId].push(task);
+        completed[targetId].push({ targetId: task.targetId, action: task.action });
     }
 
     private recordPerformance() {

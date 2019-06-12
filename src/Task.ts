@@ -1,5 +1,7 @@
-export default interface Task {
+export type ActionType = 'init' | 'prepare' | 'work' | 'finalize' | 'cleanup';
+
+export default interface ITask {
     targetId: number
-    action: 'init' | 'prepare' | 'work' | 'finalize' | 'cleanup'
+    action: ActionType
     _onComplete?: () => void
 }

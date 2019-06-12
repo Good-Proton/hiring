@@ -1,12 +1,12 @@
 import t from 'tap';
 import Executor from '../src/Executor';
-import Task from '../src/Task';
+import ITask from '../src/Task';
 
 t.test('Executor.executeTask()', async t => {
     const executor = new Executor();
     executor.start();
 
-    const init0Task: Task = { targetId: 0, action: 'init' };
+    const init0Task: ITask = { targetId: 0, action: 'init' };
     const init0Promise = executor.executeTask(init0Task);
     t.equal(executor.executeData.running[0], init0Task,
         '`executor.executeTask(init0Task)` places task into `executor.executeData.running`');
@@ -17,8 +17,8 @@ t.test('Executor.executeTask()', async t => {
     t.same(executor.executeData.completed, { [init0Task.targetId]: [init0Task] },
         'executed `init0Task` is placed into `executor.executeData.completed`');
     
-    const init2Task: Task = { targetId: 2, action: 'init' };
-    const init3Task: Task = { targetId: 3, action: 'init' };
+    const init2Task: ITask = { targetId: 2, action: 'init' };
+    const init3Task: ITask = { targetId: 3, action: 'init' };
     const init2Promise = executor.executeTask(init2Task);
     try {
         await executor.executeTask(init3Task);
@@ -29,8 +29,8 @@ t.test('Executor.executeTask()', async t => {
         await init2Promise;
     }
     
-    const init1Task: Task = { targetId: 1, action: 'init' };
-    const prepare1Task: Task = { targetId: 1, action: 'prepare' };
+    const init1Task: ITask = { targetId: 1, action: 'init' };
+    const prepare1Task: ITask = { targetId: 1, action: 'prepare' };
     const init1Promise = executor.executeTask(init1Task);
     try {
         await executor.executeTask(prepare1Task);
@@ -48,10 +48,10 @@ t.test('Executor.performanceReport for 4 simultaneous tasks', async t => {
     const executor = new Executor();
     executor.start();
 
-    const init0Task: Task = { targetId: 0, action: 'init' };
-    const init1Task: Task = { targetId: 1, action: 'init' };
-    const init2Task: Task = { targetId: 2, action: 'init' };
-    const init3Task: Task = { targetId: 3, action: 'init' };
+    const init0Task: ITask = { targetId: 0, action: 'init' };
+    const init1Task: ITask = { targetId: 1, action: 'init' };
+    const init2Task: ITask = { targetId: 2, action: 'init' };
+    const init3Task: ITask = { targetId: 3, action: 'init' };
 
     await Promise.all([
         executor.executeTask(init0Task),
@@ -74,11 +74,11 @@ t.test('Executor.performanceReport for 3 simultaneous tasks + 2 simulataneous ta
     const executor = new Executor();
     executor.start();
 
-    const init0Task: Task = { targetId: 0, action: 'init' };
-    const init1Task: Task = { targetId: 1, action: 'init' };
-    const init2Task: Task = { targetId: 2, action: 'init' };
-    const init3Task: Task = { targetId: 3, action: 'init' };
-    const init4Task: Task = { targetId: 4, action: 'init' };
+    const init0Task: ITask = { targetId: 0, action: 'init' };
+    const init1Task: ITask = { targetId: 1, action: 'init' };
+    const init2Task: ITask = { targetId: 2, action: 'init' };
+    const init3Task: ITask = { targetId: 3, action: 'init' };
+    const init4Task: ITask = { targetId: 4, action: 'init' };
 
     await Promise.all([
         executor.executeTask(init0Task),
