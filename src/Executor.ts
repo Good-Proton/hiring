@@ -8,23 +8,13 @@ export interface ICompletedTasksCollection {
     [targetId: string]: ITask[]
 }
 
-export interface IPerformanceReport {
-    min: number
-    max: number
-    avg: number
+export interface IExecutor {
+    executeTask(task: ITask): Promise<void>
+    start(): void
+    stop(): void
 }
 
-export default class Executor {
-    public readonly executeData: {
-        running: ITaskCollection
-        completed: ICompletedTasksCollection
-        performanceData: Array<{
-            running: ITask[]
-        }>
-    };
-
-    public readonly performanceReport: IPerformanceReport;
-
+export default class Executor implements IExecutor {
     constructor() {
         this.executeData = {
             running: {},
@@ -46,16 +36,9 @@ export default class Executor {
         this.performanceReport.min = 0;
         this.performanceReport.max = 0;
         this.performanceReport.avg = 0;
-
-        this.interval = setInterval(() => this.recordPerformance.bind(this), 10);
     }
 
     public stop() {
-        // istanbul ignore if
-        if (this.interval) {
-            clearInterval(this.interval);
-            this.interval = undefined;
-        }
         // istanbul ignore if
         if (this.timeout) {
             clearTimeout(this.timeout);
@@ -95,6 +78,9 @@ export default class Executor {
         }
 
         running[targetId] = task;
+        if (task._onExecute) {
+            task._onExecute();
+        }
         this.deferRecordPerformance();
 
         switch (task.action) {
@@ -144,11 +130,25 @@ export default class Executor {
         this.timeout = setTimeout(this.recordPerformance.bind(this), 0);
     }
 
-    private interval?: NodeJS.Timeout;
+    protected performanceReport: {
+        min: number
+        max: number
+        avg: number
+    };
+
+    protected executeData: {
+        running: ITaskCollection
+        completed: ICompletedTasksCollection
+        performanceData: Array<{
+            running: ITask[]
+        }>
+    };
+
     private timeout?: NodeJS.Timeout;
 }
 
 async function sleep(ms: number) {
     ms = Math.max(0, ms);
+    ms += (Math.random() - 0.5) * ms / 4;
     return new Promise<void>(r => setTimeout(() => r(), ms));
 }

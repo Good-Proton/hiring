@@ -1,8 +1,8 @@
 import t from 'tap';
 import run from '../src/run';
 import ITask, { ActionType } from '../src/Task';
-
-type TaskExt = ITask & { completed?: true };
+import ExecutorExt from './ExecutorExt';
+import ITaskExt from './ITaskExt';
 
 const queue: ITask[] = [
     { targetId: 4, action: 'init' }, { targetId: 0, action: 'init' }, { targetId: 1, action: 'init' },
@@ -47,35 +47,14 @@ const wantedResult = {
     { targetId: 9, action: 'finalize' }, { targetId: 9, action: 'cleanup' }],
 };
 
-function getQueue() {
-    const q = queue.map(t => {
-        const item: TaskExt = { ...t };
-        item._onComplete = () => item.completed = true;
-        return item;
-    });
-
-    return {
-        [Symbol.iterator]() {
-            let i = 0;
-            return {
-                next() {
-                    while (q[i] && q[i].completed) {
-                        i++;
-                    }
-                    return {
-                        done: i >= q.length,
-                        value: q[i++]
-                    };
-                }
-            };
-        }
-    };
-}
-
 t.test('run() without threads limit', async t => {
-    const result = await run(getQueue());
-    const completed = result.completed;
-    const performance = result.performance;
+    const queue = getQueue();
+    const executor = new ExecutorExt(t.name, queue);
+    executor.start();
+    await run(executor, queue);
+    executor.stop();
+    const completed = executor.getExecuteData().completed;
+    const performance = executor.getPerformanceReport();
 
     t.pass('run() executed sucessfully');
     t.same(completed, wantedResult,
@@ -88,9 +67,13 @@ t.test('run() without threads limit', async t => {
 });
 
 t.test('run() with 2 max threads', async t => {
-    const result = await run(getQueue(), 2);
-    const completed = result.completed;
-    const performance = result.performance;
+    const queue = getQueue();
+    const executor = new ExecutorExt(t.name, queue);
+    executor.start();
+    await run(executor, queue, 2);
+    executor.stop();
+    const completed = executor.getExecuteData().completed;
+    const performance = executor.getPerformanceReport();
 
     t.pass('run() executed sucessfully');
     t.same(completed, wantedResult,
@@ -103,9 +86,13 @@ t.test('run() with 2 max threads', async t => {
 });
 
 t.test('run() with 3 max threads', async t => {
-    const result = await run(getQueue(), 3);
-    const completed = result.completed;
-    const performance = result.performance;
+    const queue = getQueue();
+    const executor = new ExecutorExt(t.name, queue);
+    executor.start();
+    await run(executor, queue, 3);
+    executor.stop();
+    const completed = executor.getExecuteData().completed;
+    const performance = executor.getPerformanceReport();
 
     t.pass('run() executed sucessfully');
     t.same(completed, wantedResult,
@@ -118,9 +105,13 @@ t.test('run() with 3 max threads', async t => {
 });
 
 t.test('run() with 5 max threads', async t => {
-    const result = await run(getQueue(), 5);
-    const completed = result.completed;
-    const performance = result.performance;
+    const queue = getQueue();
+    const executor = new ExecutorExt(t.name, queue);
+    executor.start();
+    await run(executor, queue, 5);
+    executor.stop();
+    const completed = executor.getExecuteData().completed;
+    const performance = executor.getPerformanceReport();
 
     t.pass('run() executed sucessfully');
     t.same(completed, wantedResult,
@@ -133,14 +124,18 @@ t.test('run() with 5 max threads', async t => {
 });
 
 t.test('run() with 2 threads on modifying queue', async t => {
-    const tasks: TaskExt[][] = [];
+    const tasks: ITaskExt[][] = [];
     for (const i of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]) {
         tasks[i] = [];
         for (const action of ['init', 'prepare', 'work', 'finalize', 'cleanup']) {
             tasks[i].push({
                 targetId: i,
                 action: action as ActionType,
+                _onExecute() {
+                    this.running = true;
+                },
                 _onComplete() {
+                    delete this.running;
                     this.completed = true;
                 }
             });
@@ -153,30 +148,37 @@ t.test('run() with 2 threads on modifying queue', async t => {
 
     tasks[0][0]._onComplete = () => {
         q.push(...tasks[3]);
+        delete tasks[0][0].running;
         tasks[0][0].completed = true;
     };
     tasks[1][1]._onComplete = () => {
         q.push(...tasks[4]);
+        delete tasks[1][1].running;
         tasks[1][1].completed = true;
     };
     tasks[2][2]._onComplete = () => {
         q.push(...tasks[5]);
+        delete tasks[2][2].running;
         tasks[2][2].completed = true;
     };
     tasks[3][3]._onComplete = () => {
         q.push(...tasks[6]);
+        delete tasks[3][3].running;
         tasks[3][3].completed = true;
     };
     tasks[4][4]._onComplete = () => {
         q.push(...tasks[7]);
+        delete tasks[4][4].running;
         tasks[4][4].completed = true;
     };
     tasks[5][4]._onComplete = () => {
         q.push(...tasks[8]);
+        delete tasks[5][4].running;
         tasks[5][4].completed = true;
     };
     tasks[8][4]._onComplete = () => {
         q.push(...tasks[9]);
+        delete tasks[8][4].running;
         tasks[8][4].completed = true;
     };
 
@@ -185,21 +187,29 @@ t.test('run() with 2 threads on modifying queue', async t => {
             let i = 0;
             return {
                 next() {
-                    while (q[i] && q[i].completed) {
+                    while (q[i] && (q[i].completed || q[i].acquired)) {
                         i++;
                     }
+                    const value = q[i];
+                    if (value) {
+                        value.acquired = true;
+                    }
                     return {
-                        done: i >= q.length,
-                        value: q[i++]
+                        done: i++ >= q.length,
+                        value
                     };
                 }
             };
-        }
+        },
+        q
     };
 
-    const result = await run(queue, 2);
-    const completed = result.completed;
-    const performance = result.performance;
+    const executor = new ExecutorExt(t.name, queue);
+    executor.start();
+    await run(executor, queue, 2);
+    executor.stop();
+    const completed = executor.getExecuteData().completed;
+    const performance = executor.getPerformanceReport();
 
     t.pass('run() executed sucessfully');
     t.match(completed, wantedResult,
@@ -214,21 +224,30 @@ t.test('run() with 2 threads on modifying queue', async t => {
 t.test('run() with 3 threads on infinite queue', async t => {
     const queue = {
         [Symbol.iterator]() {
-            let currentTargetId = 0;
             return {
                 next() {
-                    if (queue.completed.length < 2) {
-                        while (queue.completed.indexOf(currentTargetId) != -1) {
-                            currentTargetId++;
-                        }
-                        const targetId = currentTargetId++;
+                    const completedCount = queue.q.reduce((count, t) => {
+                        return count + (t.completed ? 1 : 0);
+                    }, 0);
+
+                    if (completedCount < 2) {
+                        const task: ITaskExt = {
+                            targetId: queue.q.length,
+                            action: 'init',
+                            acquired: true,
+                            _onExecute() {
+                                task.running = true;
+                            },
+                            _onComplete() {
+                                delete task.running;
+                                task.completed = true;
+                            }
+                        };
+                        task.acquired = true;
+                        queue.q.push(task);
                         return {
                             done: false,
-                            value: {
-                                targetId,
-                                action: 'init' as const,
-                                _onComplete() { queue.completed.push(targetId); }
-                            }
+                            value: task
                         };
                     } else {
                         return {
@@ -239,12 +258,15 @@ t.test('run() with 3 threads on infinite queue', async t => {
                 }
             };
         },
-        completed: [] as number[]
+        q: [] as ITaskExt[]
     };
 
-    const result = await run(queue, 3);
-    const completed = result.completed;
-    const performance = result.performance;
+    const executor = new ExecutorExt(t.name, queue);
+    executor.start();
+    await run(executor, queue, 3);
+    executor.stop();
+    const completed = executor.getExecuteData().completed;
+    const performance = executor.getPerformanceReport();
 
     t.pass('run() executed sucessfully');
     t.match(completed,
@@ -258,3 +280,37 @@ t.test('run() with 3 threads on infinite queue', async t => {
     t.equal(performance.max, 3,
         '`performance.max` should be `3` (' + performance.max + ')');
 });
+
+function getQueue() {
+    const q = queue.map(t => {
+        const item: ITaskExt = { ...t };
+        item._onExecute = () => item.running = true;
+        item._onComplete = () => {
+            delete item.running;
+            item.completed = true;
+        };
+        return item;
+    });
+
+    return {
+        [Symbol.iterator]() {
+            let i = 0;
+            return {
+                next() {
+                    while (q[i] && (q[i].completed || q[i].acquired)) {
+                        i++;
+                    }
+                    const value = q[i];
+                    if (value) {
+                        value.acquired = true;
+                    }
+                    return {
+                        done: i++ >= q.length,
+                        value
+                    };
+                }
+            };
+        },
+        q
+    };
+}

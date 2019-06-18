@@ -1,6 +1,7 @@
 declare module 'tap' {
     export class Test {
         constructor(options?: Options.Test)
+        name: string
         tearDown(fn: (a: any) => any): void
         setTimeout(n: number): void
         endAll(): void

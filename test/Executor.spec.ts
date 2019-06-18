@@ -1,20 +1,20 @@
 import t from 'tap';
-import Executor from '../src/Executor';
 import ITask from '../src/Task';
+import ExecutorExt from './ExecutorExt';
 
 t.test('Executor.executeTask()', async t => {
-    const executor = new Executor();
+    const executor = new ExecutorExt();
     executor.start();
 
     const init0Task: ITask = { targetId: 0, action: 'init' };
     const init0Promise = executor.executeTask(init0Task);
-    t.equal(executor.executeData.running[0], init0Task,
+    t.equal(executor.getExecuteData().running[0], init0Task,
         '`executor.executeTask(init0Task)` places task into `executor.executeData.running`');
     
     await init0Promise;
-    t.same(executor.executeData.running, { },
+    t.same(executor.getExecuteData().running, { },
         'after execution of all tasks `executor.executeData.running` is empty');
-    t.same(executor.executeData.completed, { [init0Task.targetId]: [init0Task] },
+    t.same(executor.getExecuteData().completed, { [init0Task.targetId]: [init0Task] },
         'executed `init0Task` is placed into `executor.executeData.completed`');
     
     const init2Task: ITask = { targetId: 2, action: 'init' };
@@ -45,7 +45,7 @@ t.test('Executor.executeTask()', async t => {
 });
 
 t.test('Executor.performanceReport for 4 simultaneous tasks', async t => {
-    const executor = new Executor();
+    const executor = new ExecutorExt();
     executor.start();
 
     const init0Task: ITask = { targetId: 0, action: 'init' };
@@ -62,16 +62,16 @@ t.test('Executor.performanceReport for 4 simultaneous tasks', async t => {
     
     executor.stop();
 
-    t.ok(executor.performanceReport.min >= 3 && executor.performanceReport.min <= 4,
-        '`executor.performanceReport.min` is between `3` and `4` (' + executor.performanceReport.min + ')');
-    t.equal(executor.performanceReport.max, 4,
-        '`executor.performanceReport.max` `4` (' + executor.performanceReport.max + ')');
-    t.ok(executor.performanceReport.avg >= 3 && executor.performanceReport.avg <= 4,
-        '`executor.performanceReport.avg` is between `3` and `4` (' + executor.performanceReport.avg + ')');
+    t.ok(executor.getPerformanceReport().min >= 3 && executor.getPerformanceReport().min <= 4,
+        '`executor.performanceReport.min` is between `3` and `4` (' + executor.getPerformanceReport().min + ')');
+    t.equal(executor.getPerformanceReport().max, 4,
+        '`executor.performanceReport.max` `4` (' + executor.getPerformanceReport().max + ')');
+    t.ok(executor.getPerformanceReport().avg >= 3 && executor.getPerformanceReport().avg <= 4,
+        '`executor.performanceReport.avg` is between `3` and `4` (' + executor.getPerformanceReport().avg + ')');
 });
 
 t.test('Executor.performanceReport for 3 simultaneous tasks + 2 simulataneous tasks after', async t => {
-    const executor = new Executor();
+    const executor = new ExecutorExt();
     executor.start();
 
     const init0Task: ITask = { targetId: 0, action: 'init' };
@@ -92,10 +92,10 @@ t.test('Executor.performanceReport for 3 simultaneous tasks + 2 simulataneous ta
 
     executor.stop();
 
-    t.equal(executor.performanceReport.min, 2,
-        '`executor.performanceReport.min` is `2` (' + executor.performanceReport.min + ')');
-    t.equal(executor.performanceReport.max, 3,
-        '`executor.performanceReport.max` `3` (' + executor.performanceReport.max + ')');
-    t.ok(executor.performanceReport.avg >= 2 && executor.performanceReport.avg <= 3,
-        '`executor.performanceReport.avg` is between `2` and `3` (' + executor.performanceReport.avg + ')');
+    t.equal(executor.getPerformanceReport().min, 2,
+        '`executor.performanceReport.min` is `2` (' + executor.getPerformanceReport().min + ')');
+    t.equal(executor.getPerformanceReport().max, 3,
+        '`executor.performanceReport.max` `3` (' + executor.getPerformanceReport().max + ')');
+    t.ok(executor.getPerformanceReport().avg >= 2 && executor.getPerformanceReport().avg <= 3,
+        '`executor.performanceReport.avg` is between `2` and `3` (' + executor.getPerformanceReport().avg + ')');
 });

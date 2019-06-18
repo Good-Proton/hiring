@@ -9,6 +9,7 @@
   ],
   "types": "dist/index.d.ts",
   "scripts": {
+    "lint": "tslint -p . && tslint -p test",
     "test": "tap --reporter=spec test/*.spec.ts"
   },
   "repository": {
