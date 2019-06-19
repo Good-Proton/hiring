@@ -203,14 +203,21 @@ t.test('run() with 2 threads on modifying queue', async t => {
                     while (q[i] && (q[i].completed || q[i].acquired)) {
                         i++;
                     }
-                    const value = q[i];
-                    if (value) {
-                        value.acquired = true;
+                    if (i < q.length) {
+                        const value = q[i++];
+                        if (value) {
+                            value.acquired = true;
+                        }
+                        return {
+                            done: false,
+                            value
+                        };
+                    } else {
+                        return {
+                            done: true,
+                            value: undefined as unknown as ITaskExt
+                        };
                     }
-                    return {
-                        done: i++ >= q.length,
-                        value
-                    };
                 }
             };
         },
@@ -323,14 +330,21 @@ function getQueue() {
                     while (q[i] && (q[i].completed || q[i].acquired)) {
                         i++;
                     }
-                    const value = q[i];
-                    if (value) {
-                        value.acquired = true;
+                    if (i < q.length) {
+                        const value = q[i++];
+                        if (value) {
+                            value.acquired = true;
+                        }
+                        return {
+                            done: false,
+                            value
+                        };
+                    } else {
+                        return {
+                            done: true,
+                            value: undefined as unknown as ITaskExt
+                        };
                     }
-                    return {
-                        done: i++ >= q.length,
-                        value
-                    };
                 }
             };
         },
