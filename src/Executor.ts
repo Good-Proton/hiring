@@ -149,6 +149,6 @@ export default class Executor implements IExecutor {
 
 async function sleep(ms: number) {
     ms = Math.max(0, ms);
-    ms += (Math.random() - 0.5) * ms / 4;
+    // ms += (Math.random() - 0.5) * ms / 10;
     return new Promise<void>(r => setTimeout(() => r(), ms));
 }

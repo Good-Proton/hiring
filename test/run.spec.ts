@@ -47,6 +47,9 @@ const wantedResult = {
     { targetId: 9, action: 'finalize' }, { targetId: 9, action: 'cleanup' }],
 };
 
+let real = 0;
+let ideal = 0;
+
 t.test('run() without threads limit', async t => {
     const queue = getQueue();
     const executor = new ExecutorExt(t.name, queue);
@@ -64,6 +67,9 @@ t.test('run() without threads limit', async t => {
         '`performance.max` should be `10` (equal to number of distinct `targetId`) (' + performance.max + ')');
     t.ok(performance.avg > 9,
         '`performance.avg` should be greater than `9` (~number of distinct `targetId`) (' + performance.avg + ')');
+    
+    real += performance.avg;
+    ideal += 10;
 });
 
 t.test('run() with 2 max threads', async t => {
@@ -83,6 +89,9 @@ t.test('run() with 2 max threads', async t => {
         '`performance.max` should be `2` (' + performance.max + ')');
     t.ok(performance.avg > 1.5,
         '`performance.avg` should be greater than `1.5` (' + performance.avg + ')');
+    
+    real += performance.avg;
+    ideal += 2;
 });
 
 t.test('run() with 3 max threads', async t => {
@@ -102,6 +111,9 @@ t.test('run() with 3 max threads', async t => {
         '`performance.max` should be `3` (' + performance.max + ')');
     t.ok(performance.avg > 2,
         '`performance.avg` should be greater than `2` (' + performance.avg + ')');
+    
+    real += performance.avg;
+    ideal += 3;
 });
 
 t.test('run() with 5 max threads', async t => {
@@ -121,6 +133,9 @@ t.test('run() with 5 max threads', async t => {
         '`performance.max` should be `5` (' + performance.max + ')');
     t.ok(performance.avg > 4,
         '`performance.avg` should be greater than `4` (' + performance.avg + ')');
+    
+    real += performance.avg;
+    ideal += 5;
 });
 
 t.test('run() with 2 threads on modifying queue', async t => {
@@ -142,14 +157,12 @@ t.test('run() with 2 threads on modifying queue', async t => {
         }
     }
 
-    const q = [
-        ...tasks[0], ...tasks[1], ...tasks[2]
-    ];
+    const q = [...tasks[0]];
 
-    tasks[0][0]._onComplete = () => {
-        q.push(...tasks[3]);
-        delete tasks[0][0].running;
-        tasks[0][0].completed = true;
+    tasks[0][4]._onComplete = () => {
+        q.push(...tasks[1], ...tasks[2], ...tasks[3]);
+        delete tasks[0][4].running;
+        tasks[0][4].completed = true;
     };
     tasks[1][1]._onComplete = () => {
         q.push(...tasks[4]);
@@ -219,6 +232,9 @@ t.test('run() with 2 threads on modifying queue', async t => {
         '`performance.max` should be `2` (' + performance.max + ')');
     t.ok(performance.avg > 1.5,
         '`performance.avg` should be greater than `1.5` (' + performance.avg + ')');
+    
+    real += performance.avg;
+    ideal += 2;
 });
 
 t.test('run() with 3 threads on infinite queue', async t => {
@@ -279,6 +295,13 @@ t.test('run() with 3 threads on infinite queue', async t => {
 
     t.equal(performance.max, 3,
         '`performance.max` should be `3` (' + performance.max + ')');
+    
+    real += performance.avg;
+    ideal += 3;
+});
+
+t.test(`performance score`, async t => {
+    t.pass((real / ideal * 100).toFixed(2));
 });
 
 function getQueue() {

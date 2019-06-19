@@ -1,10 +1,10 @@
 import fs from 'fs';
 import path from 'path';
+import tsame from 'tsame';
 import { ActionType } from '../src/Task';
 import ITaskExt from './ITaskExt';
 
 const dirname = path.dirname(__filename);
-
 interface ILogRecord {
     date: Date,
     queue: Array<{
@@ -25,7 +25,7 @@ export default class Log {
     }
 
     public start() {
-        this.interval = setInterval(this.record.bind(this), 10);
+        this.interval = setInterval(this.record.bind(this), 100);
     }
 
     public stop() {
@@ -34,6 +34,19 @@ export default class Log {
             clearInterval(this.interval);
             delete this.interval;
         }
+    }
+
+    public record() {
+        this.log.push({
+            date: new Date(),
+            queue: this.queue.q.map(t => ({
+                targetId: t.targetId,
+                action: t.action,
+                running: t.running,
+                completed: t.completed,
+                acquired: t.acquired
+            }))
+        });
     }
 
     public writeHtml() {
@@ -83,13 +96,18 @@ export default class Log {
     <table>
         <caption>${this.name} log</caption>
         <tr>
-            <th>date</th><th>total</th><th>completed</th><th>acquired</th><th>running</th><th>queued</th><th>map</th>
+            <th>time</th><th>total</th><th>completed</th><th>acquired</th><th>running</th><th>queued</th><th>map</th>
         </tr>`;
 
+        let prevRecord: ILogRecord | null = null;
+        const start = this.log[0].date.valueOf();
         for (const record of this.log) {
-            html += `
+            if (!prevRecord || !tsame(record.queue, prevRecord.queue)) {
+                const timeDiff = record.date.valueOf() - (prevRecord ? prevRecord.date.valueOf() : start);
+                prevRecord = record;
+                html += `
         <tr>
-            <td>${record.date.toLocaleTimeString()}</td>
+            <td>${timeDiff} / ${record.date.valueOf() - start}</td>
             <td>${record.queue.length}</td>
             <td>${record.queue.reduce((count, t) => count + (t.completed ? 1 : 0), 0)}</td>
             <td>${record.queue.reduce((count, t) => count + (t.acquired && !t.completed && !t.running ? 1 : 0), 0)}</td>
@@ -98,51 +116,52 @@ export default class Log {
             <td>
                 <p class="all">`;
 
-            const targetIds = new Set<number>();
-            for (const t of record.queue) {
-                targetIds.add(t.targetId);
-                const classes = [];
-                if (t.completed) {
-                    classes.push('completed');
-                }
-                if (t.acquired && !t.completed && !t.running) {
-                    classes.push('acquired');
-                }
-                if (t.running) {
-                    classes.push('running');
-                }
-                html += `<span 
+                const targetIds = new Set<number>();
+                for (const t of record.queue) {
+                    targetIds.add(t.targetId);
+                    const classes = [];
+                    if (t.completed) {
+                        classes.push('completed');
+                    }
+                    if (t.acquired && !t.completed && !t.running) {
+                        classes.push('acquired');
+                    }
+                    if (t.running) {
+                        classes.push('running');
+                    }
+                    html += `<span 
                     title="${t.targetId}:${t.action}" 
                     class="${classes.join(' ')}">${t.targetId}</span>`;
-            }
-            html += `
-                </p>`;
-            
-            for (const targetId of targetIds) {
-                html += `
-                <p class="target target-${targetId}"><span>${targetId}:</span>`;
-                for (const t of record.queue) {
-                    if (t.targetId == targetId) {
-                        const classes = [];
-                        if (t.completed) {
-                            classes.push('completed');
-                        }
-                        if (t.acquired && !t.completed && !t.running) {
-                            classes.push('acquired');
-                        }
-                        if (t.running) {
-                            classes.push('running');
-                        }
-                        html += `<span class="${classes.join(' ')}">${t.action}</span>`;
-                    }
                 }
                 html += `
                 </p>`;
-            }
             
-            html += `
+                for (const targetId of targetIds) {
+                    html += `
+                <p class="target target-${targetId}"><span>${targetId}:</span>`;
+                    for (const t of record.queue) {
+                        if (t.targetId == targetId) {
+                            const classes = [];
+                            if (t.completed) {
+                                classes.push('completed');
+                            }
+                            if (t.acquired && !t.completed && !t.running) {
+                                classes.push('acquired');
+                            }
+                            if (t.running) {
+                                classes.push('running');
+                            }
+                            html += `<span class="${classes.join(' ')}">${t.action}</span>`;
+                        }
+                    }
+                    html += `
+                </p>`;
+                }
+            
+                html += `
             </td>
         </tr>`;
+            }
         }
 
         html += `
@@ -151,19 +170,6 @@ export default class Log {
 </html>`;
         
         fs.writeFileSync(this.path, html);
-    }
-
-    private record() {
-        this.log.push({
-            date: new Date(),
-            queue: this.queue.q.map(t => ({
-                targetId: t.targetId,
-                action: t.action,
-                running: t.running,
-                completed: t.completed,
-                acquired: t.acquired
-            }))
-        });
     }
 
     private path: string;

@@ -1,4 +1,5 @@
 import Executor from '../src/Executor';
+import ITask from '../src/Task';
 import ITaskExt from './ITaskExt';
 import Log from './Log';
 
@@ -17,6 +18,16 @@ export default class ExecutorExt extends Executor {
 
     public getExecuteData() {
         return this.executeData;
+    }
+
+    public async executeTask(task: ITask) {
+        if (this.logger) {
+            process.nextTick(this.logger.record.bind(this.logger));
+        }
+        await super.executeTask(task);
+        if (this.logger) {
+            process.nextTick(this.logger.record.bind(this.logger));
+        }
     }
 
     public start() {
