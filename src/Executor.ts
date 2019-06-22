@@ -89,19 +89,19 @@ export default class Executor implements IExecutor {
                 break;
             }
             case 'prepare': {
-                await sleep(75);
-                break;
-            }
-            case 'work': {
-                await sleep(500);
-                break;
-            }
-            case 'finalize': {
                 await sleep(250);
                 break;
             }
+            case 'work': {
+                await sleep(1000);
+                break;
+            }
+            case 'finalize': {
+                await sleep(500);
+                break;
+            }
             default: {
-                await sleep(75);
+                await sleep(25);
                 break;
             }
         }

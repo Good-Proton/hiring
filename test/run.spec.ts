@@ -1,54 +1,9 @@
 import t from 'tap';
 import run from '../src/run';
 import ITask, { ActionType } from '../src/Task';
+import { distinctTargetIdsCount, getQueue, wantedResult } from './data';
 import ExecutorExt from './ExecutorExt';
 import ITaskExt from './ITaskExt';
-
-const queue: ITask[] = [
-    { targetId: 4, action: 'init' }, { targetId: 0, action: 'init' }, { targetId: 1, action: 'init' },
-    { targetId: 6, action: 'init' }, { targetId: 1, action: 'prepare' }, { targetId: 8, action: 'init' },
-    { targetId: 6, action: 'prepare' }, { targetId: 2, action: 'init' }, { targetId: 0, action: 'prepare' },
-    { targetId: 5, action: 'init' }, { targetId: 3, action: 'init' }, { targetId: 7, action: 'init' },
-    { targetId: 7, action: 'prepare' }, { targetId: 3, action: 'prepare' }, { targetId: 0, action: 'work' },
-    { targetId: 8, action: 'prepare' }, { targetId: 3, action: 'work' }, { targetId: 4, action: 'prepare' },
-    { targetId: 9, action: 'init' }, { targetId: 2, action: 'prepare' },
-    { targetId: 5, action: 'prepare' }, { targetId: 0, action: 'finalize' }, { targetId: 2, action: 'work' },
-    { targetId: 8, action: 'work' }, { targetId: 8, action: 'finalize' }, { targetId: 4, action: 'work' },
-    { targetId: 8, action: 'cleanup' }, { targetId: 9, action: 'prepare' }, { targetId: 0, action: 'cleanup' },
-    { targetId: 5, action: 'work' }, { targetId: 1, action: 'work' }, { targetId: 5, action: 'finalize' },
-    { targetId: 1, action: 'finalize' }, { targetId: 3, action: 'finalize' }, { targetId: 7, action: 'work' },
-    { targetId: 2, action: 'finalize' }, { targetId: 6, action: 'work' }, { targetId: 2, action: 'cleanup' },
-    { targetId: 3, action: 'cleanup' }, { targetId: 6, action: 'finalize' }, { targetId: 4, action: 'finalize' },
-    { targetId: 7, action: 'finalize' }, { targetId: 4, action: 'cleanup' }, { targetId: 5, action: 'cleanup' },
-    { targetId: 6, action: 'cleanup' }, { targetId: 7, action: 'cleanup' }, { targetId: 9, action: 'work' },
-    { targetId: 9, action: 'finalize' }, { targetId: 9, action: 'cleanup' }, { targetId: 1, action: 'cleanup' }
-];
-
-const wantedResult = {
-    0: [{ targetId: 0, action: 'init' }, { targetId: 0, action: 'prepare' }, { targetId: 0, action: 'work' },
-    { targetId: 0, action: 'finalize' }, { targetId: 0, action: 'cleanup' }],
-    1: [{ targetId: 1, action: 'init' }, { targetId: 1, action: 'prepare' }, { targetId: 1, action: 'work' },
-    { targetId: 1, action: 'finalize' }, { targetId: 1, action: 'cleanup' }],
-    2: [{ targetId: 2, action: 'init' }, { targetId: 2, action: 'prepare' }, { targetId: 2, action: 'work' },
-    { targetId: 2, action: 'finalize' }, { targetId: 2, action: 'cleanup' }],
-    3: [{ targetId: 3, action: 'init' }, { targetId: 3, action: 'prepare' }, { targetId: 3, action: 'work' },
-    { targetId: 3, action: 'finalize' }, { targetId: 3, action: 'cleanup' }],
-    4: [{ targetId: 4, action: 'init' }, { targetId: 4, action: 'prepare' }, { targetId: 4, action: 'work' },
-    { targetId: 4, action: 'finalize' }, { targetId: 4, action: 'cleanup' }],
-    5: [{ targetId: 5, action: 'init' }, { targetId: 5, action: 'prepare' }, { targetId: 5, action: 'work' },
-    { targetId: 5, action: 'finalize' }, { targetId: 5, action: 'cleanup' }],
-    6: [{ targetId: 6, action: 'init' }, { targetId: 6, action: 'prepare' }, { targetId: 6, action: 'work' },
-    { targetId: 6, action: 'finalize' }, { targetId: 6, action: 'cleanup' }],
-    7: [{ targetId: 7, action: 'init' }, { targetId: 7, action: 'prepare' }, { targetId: 7, action: 'work' },
-    { targetId: 7, action: 'finalize' }, { targetId: 7, action: 'cleanup' }],
-    8: [{ targetId: 8, action: 'init' }, { targetId: 8, action: 'prepare' }, { targetId: 8, action: 'work' },
-    { targetId: 8, action: 'finalize' }, { targetId: 8, action: 'cleanup' }],
-    9: [{ targetId: 9, action: 'init' }, { targetId: 9, action: 'prepare' }, { targetId: 9, action: 'work' },
-    { targetId: 9, action: 'finalize' }, { targetId: 9, action: 'cleanup' }],
-};
-
-let real = 0;
-let ideal = 0;
 
 t.test('run() without threads limit', async t => {
     const queue = getQueue();
@@ -63,13 +18,12 @@ t.test('run() without threads limit', async t => {
     t.same(completed, wantedResult,
         'all tasks completed in proper order');
 
-    t.equal(performance.max, 10,
-        '`performance.max` should be `10` (equal to number of distinct `targetId`) (' + performance.max + ')');
-    t.ok(performance.avg > 9,
-        '`performance.avg` should be greater than `9` (~number of distinct `targetId`) (' + performance.avg + ')');
-    
-    real += performance.avg;
-    ideal += 10;
+    t.equal(performance.max, distinctTargetIdsCount,
+        '`performance.max` should be `' + distinctTargetIdsCount +
+        '` (equal to number of distinct `targetId`) (' + performance.max + ')');
+    t.ok(performance.avg > distinctTargetIdsCount - 0.5,
+        '`performance.avg` should be greater than `' + (distinctTargetIdsCount - 0.5) +
+        '` (~number of distinct `targetId`) (' + performance.avg + ')');
 });
 
 t.test('run() with 2 max threads', async t => {
@@ -89,9 +43,6 @@ t.test('run() with 2 max threads', async t => {
         '`performance.max` should be `2` (' + performance.max + ')');
     t.ok(performance.avg > 1.5,
         '`performance.avg` should be greater than `1.5` (' + performance.avg + ')');
-    
-    real += performance.avg;
-    ideal += 2;
 });
 
 t.test('run() with 3 max threads', async t => {
@@ -111,9 +62,6 @@ t.test('run() with 3 max threads', async t => {
         '`performance.max` should be `3` (' + performance.max + ')');
     t.ok(performance.avg > 2,
         '`performance.avg` should be greater than `2` (' + performance.avg + ')');
-    
-    real += performance.avg;
-    ideal += 3;
 });
 
 t.test('run() with 5 max threads', async t => {
@@ -133,14 +81,11 @@ t.test('run() with 5 max threads', async t => {
         '`performance.max` should be `5` (' + performance.max + ')');
     t.ok(performance.avg > 4,
         '`performance.avg` should be greater than `4` (' + performance.avg + ')');
-    
-    real += performance.avg;
-    ideal += 5;
 });
 
 t.test('run() with 2 threads on modifying queue', async t => {
     const tasks: ITaskExt[][] = [];
-    for (const i of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]) {
+    for (const i of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]) {
         tasks[i] = [];
         for (const action of ['init', 'prepare', 'work', 'finalize', 'cleanup']) {
             tasks[i].push({
@@ -190,7 +135,7 @@ t.test('run() with 2 threads on modifying queue', async t => {
         tasks[5][4].completed = true;
     };
     tasks[8][4]._onComplete = () => {
-        q.push(...tasks[9]);
+        q.push(...tasks[9], ...tasks[10], ...tasks[11]);
         delete tasks[8][4].running;
         tasks[8][4].completed = true;
     };
@@ -239,9 +184,6 @@ t.test('run() with 2 threads on modifying queue', async t => {
         '`performance.max` should be `2` (' + performance.max + ')');
     t.ok(performance.avg > 1.5,
         '`performance.avg` should be greater than `1.5` (' + performance.avg + ')');
-    
-    real += performance.avg;
-    ideal += 2;
 });
 
 t.test('run() with 3 threads on infinite queue', async t => {
@@ -302,52 +244,4 @@ t.test('run() with 3 threads on infinite queue', async t => {
 
     t.equal(performance.max, 3,
         '`performance.max` should be `3` (' + performance.max + ')');
-    
-    real += performance.avg;
-    ideal += 3;
 });
-
-t.test(`performance score`, async t => {
-    t.pass((real / ideal * 100).toFixed(2));
-});
-
-function getQueue() {
-    const q = queue.map(t => {
-        const item: ITaskExt = { ...t };
-        item._onExecute = () => item.running = true;
-        item._onComplete = () => {
-            delete item.running;
-            item.completed = true;
-        };
-        return item;
-    });
-
-    return {
-        [Symbol.iterator]() {
-            let i = 0;
-            return {
-                next() {
-                    while (q[i] && (q[i].completed || q[i].acquired)) {
-                        i++;
-                    }
-                    if (i < q.length) {
-                        const value = q[i++];
-                        if (value) {
-                            value.acquired = true;
-                        }
-                        return {
-                            done: false,
-                            value
-                        };
-                    } else {
-                        return {
-                            done: true,
-                            value: undefined as unknown as ITaskExt
-                        };
-                    }
-                }
-            };
-        },
-        q
-    };
-}

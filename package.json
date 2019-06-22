@@ -10,7 +10,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "lint": "tslint -p . && tslint -p test",
-    "test": "tap --reporter=spec -t600 test/*.spec.ts"
+    "test": "tap --reporter=spec -t600 test/*.spec.ts",
+    "perf": "tap --no-coverage --reporter=spec -t600 test/run.perf.ts"
   },
   "repository": {
     "type": "git",
