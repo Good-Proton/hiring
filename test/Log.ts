@@ -107,7 +107,7 @@ export default class Log {
                 prevRecord = record;
                 html += `
         <tr>
-            <td>${timeDiff} / ${record.date.valueOf() - start}</td>
+            <td>${record.date.valueOf() - start}ms (+${timeDiff}ms)</td>
             <td>${record.queue.length}</td>
             <td>${record.queue.reduce((count, t) => count + (t.completed ? 1 : 0), 0)}</td>
             <td>${record.queue.reduce((count, t) => count + (t.acquired && !t.completed && !t.running ? 1 : 0), 0)}</td>

@@ -36,25 +36,32 @@ export default class Executor implements IExecutor {
         this.performanceReport.min = 0;
         this.performanceReport.max = 0;
         this.performanceReport.avg = 0;
+
+        const now = process.hrtime.bigint();
+        this.startedAt = now;
+        this.prevPerformanceRecordedAt = now;
+        this.recordPerformanceInterval = setInterval(() => this.recordPerformance(), 10);
     }
 
     public stop() {
         // istanbul ignore if
-        if (this.timeout) {
-            clearTimeout(this.timeout);
-            this.timeout = undefined;
+        if (this.recordPerformanceInterval) {
+            clearInterval(this.recordPerformanceInterval);
+            this.recordPerformanceInterval = undefined;
         }
 
+        const totalTime = Number(process.hrtime.bigint() - this.startedAt);
+
         this.performanceReport.min =
-            this.executeData.performanceData.reduce((min: number, record: { running: ITask[] }) => {
-                if (record.running.length < min) {
+            this.executeData.performanceData.reduce((min, record) => {
+                if (record.time > 10_000_000 && record.running.length < min) {
                     return record.running.length;
                 }
                 return min;
             }, Number.MAX_SAFE_INTEGER);
 
         this.performanceReport.max =
-            this.executeData.performanceData.reduce((max: number, record: { running: ITask[] }) => {
+            this.executeData.performanceData.reduce((max, record) => {
                 if (record.running.length > max) {
                     return record.running.length;
                 }
@@ -62,8 +69,8 @@ export default class Executor implements IExecutor {
             }, 0);
 
         this.performanceReport.avg =
-            this.executeData.performanceData.reduce((avg: number, record: { running: ITask[] }, index: number) => {
-                return (avg * index + record.running.length) / (index + 1);
+            this.executeData.performanceData.reduce((avg: number, record) => {
+                return avg + record.running.length * record.time / totalTime;
             }, 0);
     }
 
@@ -77,27 +84,30 @@ export default class Executor implements IExecutor {
                 `${task.action}: task with the same targetId=${targetId} is running`);
         }
 
+        this.recordPerformance();
+
         running[targetId] = task;
         if (task._onExecute) {
             task._onExecute();
         }
-        this.deferRecordPerformance();
+
+        this.recordPerformance();
 
         switch (task.action) {
             case 'init': {
-                await sleep(100);
+                await sleep(40 * (1 + targetId / 10));
                 break;
             }
             case 'prepare': {
-                await sleep(250);
+                await sleep(100 * (1 + targetId / 10));
                 break;
             }
             case 'work': {
-                await sleep(1000);
+                await sleep(200 * (1 + targetId / 10));
                 break;
             }
             case 'finalize': {
-                await sleep(500);
+                await sleep(100 * (1 + targetId / 10));
                 break;
             }
             default: {
@@ -106,28 +116,32 @@ export default class Executor implements IExecutor {
             }
         }
 
+        this.recordPerformance();
+
         delete running[targetId];
+
         if (task._onComplete) {
             task._onComplete();
         }
+
+        this.recordPerformance();
+
         if (!completed[targetId]) {
             completed[targetId] = [];
         }
         completed[targetId].push({ targetId: task.targetId, action: task.action });
+
+        this.recordPerformance();
     }
 
     private recordPerformance() {
+        const now = process.hrtime.bigint();
+        const time = Number(now - this.prevPerformanceRecordedAt);
+        this.prevPerformanceRecordedAt = now;
         this.executeData.performanceData.push({
-            running: Object.keys(this.executeData.running)
-                .map((targetId: string) => this.executeData.running[targetId])
+            running: Object.values(this.executeData.running),
+            time
         });
-    }
-
-    private deferRecordPerformance() {
-        if (this.timeout) {
-            clearTimeout(this.timeout);
-        }
-        this.timeout = setTimeout(this.recordPerformance.bind(this), 0);
     }
 
     protected performanceReport: {
@@ -141,10 +155,13 @@ export default class Executor implements IExecutor {
         completed: ICompletedTasksCollection
         performanceData: Array<{
             running: ITask[]
+            time: number
         }>
     };
 
-    private timeout?: NodeJS.Timeout;
+    private startedAt = BigInt(0);
+    private prevPerformanceRecordedAt = BigInt(0);
+    private recordPerformanceInterval?: NodeJS.Timeout;
 }
 
 async function sleep(ms: number) {
