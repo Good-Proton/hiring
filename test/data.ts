@@ -54,7 +54,7 @@ export const wantedResult = {
     { targetId: 11, action: 'finalize' }, { targetId: 11, action: 'cleanup' }],
 };
 
-export function getQueue() {
+export function getQueue(maxThreads = 0) {
     const q = queue.map(t => {
         const item: ITaskExt = { ...t };
         item._onExecute = () => item.running = true;
@@ -66,14 +66,17 @@ export function getQueue() {
     });
 
     return {
-        [Symbol.iterator]() {
+        [Symbol.asyncIterator]() {
             let i = 0;
             return {
-                next() {
+                async next() {
                     while (q[i] && (q[i].completed || q[i].acquired)) {
                         i++;
                     }
                     if (i < q.length) {
+                        if (i && i % maxThreads === 0) {
+                            await new Promise(r => setTimeout(r, 100));
+                        }
                         const value = q[i++];
                         if (value) {
                             value.acquired = true;

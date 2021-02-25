@@ -141,10 +141,10 @@ t.test('run() with 2 threads on modifying queue', async t => {
     };
 
     const queue = {
-        [Symbol.iterator]() {
+        [Symbol.asyncIterator]() {
             let i = 0;
             return {
-                next() {
+                async next() {
                     while (q[i] && (q[i].completed || q[i].acquired)) {
                         i++;
                     }
@@ -188,14 +188,16 @@ t.test('run() with 2 threads on modifying queue', async t => {
 
 t.test('run() with 3 threads on infinite queue', async t => {
     const queue = {
-        [Symbol.iterator]() {
+        [Symbol.asyncIterator]() {
             return {
-                next() {
+                async next() {
                     const completedCount = queue.q.reduce((count, t) => {
                         return count + (t.completed ? 1 : 0);
                     }, 0);
 
-                    if (completedCount < 2) {
+                    const queuedCount = queue.q.length - completedCount;
+
+                    if (completedCount < 20 || queuedCount >= 5) {
                         const task: ITaskExt = {
                             targetId: queue.q.length,
                             action: 'init',
@@ -238,14 +240,34 @@ t.test('run() with 3 threads on infinite queue', async t => {
         {
             0: [{ targetId: 0, action: 'init' }],
             1: [{ targetId: 1, action: 'init' }],
-            2: [{ targetId: 2, action: 'init' }]
+            2: [{ targetId: 2, action: 'init' }],
+            3: [{ targetId: 3, action: 'init' }],
+            4: [{ targetId: 4, action: 'init' }],
+            5: [{ targetId: 5, action: 'init' }],
+            6: [{ targetId: 6, action: 'init' }],
+            7: [{ targetId: 7, action: 'init' }],
+            8: [{ targetId: 8, action: 'init' }],
+            9: [{ targetId: 9, action: 'init' }],
+            10: [{ targetId: 10, action: 'init' }],
+            11: [{ targetId: 11, action: 'init' }],
+            12: [{ targetId: 12, action: 'init' }],
+            13: [{ targetId: 13, action: 'init' }],
+            14: [{ targetId: 14, action: 'init' }],
+            15: [{ targetId: 15, action: 'init' }],
+            16: [{ targetId: 16, action: 'init' }],
+            17: [{ targetId: 17, action: 'init' }],
+            18: [{ targetId: 18, action: 'init' }],
+            19: [{ targetId: 19, action: 'init' }],
         },
         'all tasks completed in proper order');
 
     t.equal(performance.max, 3,
         '`performance.max` should be `3` (' + performance.max + ')');
     
-    if (Object.keys(completed).length > 5) {
+    t.ok(performance.avg > 2.5,
+        '`performance.avg` should be greater than `2.5` (' + performance.avg + ')');
+    
+    if (Object.keys(completed).length > 25) {
         t.todo(`too much precache ${Object.keys(completed).length - 3}`);
     }
 });
