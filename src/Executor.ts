@@ -40,7 +40,7 @@ export default class Executor implements IExecutor {
         const now = process.hrtime.bigint();
         this.startedAt = now;
         this.prevPerformanceRecordedAt = now;
-        this.recordPerformanceInterval = setInterval(() => this.recordPerformance(), 10);
+        this.recordPerformanceInterval = setInterval(() => this.recordPerformance(true), 10);
     }
 
     public stop() {
@@ -53,12 +53,14 @@ export default class Executor implements IExecutor {
         const totalTime = Number(process.hrtime.bigint() - this.startedAt);
 
         this.performanceReport.min =
-            this.executeData.performanceData.reduce((min, record) => {
-                if (record.time > 10_000_000 && record.running.length < min) {
-                    return record.running.length;
-                }
-                return min;
-            }, Number.MAX_SAFE_INTEGER);
+            this.executeData.performanceData
+                .filter(record => !record.excludeFromMin)
+                .reduce((min, record) => {
+                    if (record.running.length < min) {
+                        return record.running.length;
+                    }
+                    return min;
+                }, Number.MAX_SAFE_INTEGER);
 
         this.performanceReport.max =
             this.executeData.performanceData.reduce((max, record) => {
@@ -84,39 +86,49 @@ export default class Executor implements IExecutor {
                 `${task.action}: task with the same targetId=${targetId} is running`);
         }
 
-        this.recordPerformance();
+        this.recordPerformance(true);
 
         running[targetId] = task;
         if (task._onExecute) {
             task._onExecute();
         }
 
-        this.recordPerformance();
+        this.recordPerformance(true);
 
         switch (task.action) {
             case 'init': {
-                await sleep(40 * (1 + targetId / 10));
+                await sleep(10 * (1 + targetId / 10));
+                this.recordPerformance(false);
+                await sleep(30 * (1 + targetId / 10));
                 break;
             }
             case 'prepare': {
-                await sleep(100 * (1 + targetId / 10));
+                await sleep(30 * (1 + targetId / 10));
+                this.recordPerformance(false);
+                await sleep(70 * (1 + targetId / 10));
                 break;
             }
             case 'work': {
-                await sleep(200 * (1 + targetId / 10));
+                await sleep(50 * (1 + targetId / 10));
+                this.recordPerformance(false);
+                await sleep(150 * (1 + targetId / 10));
                 break;
             }
             case 'finalize': {
-                await sleep(100 * (1 + targetId / 10));
+                await sleep(30 * (1 + targetId / 10));
+                this.recordPerformance(false);
+                await sleep(70 * (1 + targetId / 10));
                 break;
             }
             default: {
+                await sleep(25);
+                this.recordPerformance(false);
                 await sleep(25);
                 break;
             }
         }
 
-        this.recordPerformance();
+        this.recordPerformance(true);
 
         delete running[targetId];
 
@@ -124,21 +136,22 @@ export default class Executor implements IExecutor {
             task._onComplete();
         }
 
-        this.recordPerformance();
+        this.recordPerformance(true);
 
         if (!completed[targetId]) {
             completed[targetId] = [];
         }
         completed[targetId].push({ targetId: task.targetId, action: task.action });
 
-        this.recordPerformance();
+        this.recordPerformance(true);
     }
 
-    private recordPerformance() {
+    private recordPerformance(excludeFromMin: boolean) {
         const now = process.hrtime.bigint();
         const time = Number(now - this.prevPerformanceRecordedAt);
         this.prevPerformanceRecordedAt = now;
         this.executeData.performanceData.push({
+            excludeFromMin,
             running: Object.values(this.executeData.running),
             time
         });
@@ -154,6 +167,7 @@ export default class Executor implements IExecutor {
         running: ITaskCollection
         completed: ICompletedTasksCollection
         performanceData: Array<{
+            excludeFromMin: boolean
             running: ITask[]
             time: number
         }>
