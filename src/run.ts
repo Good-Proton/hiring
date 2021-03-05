@@ -1,7 +1,7 @@
 import { IExecutor } from './Executor';
 import ITask from './Task';
 
-export default async function run(executor: IExecutor, queue: Iterable<ITask>, maxThreads = 0) {
+export default async function run(executor: IExecutor, queue: AsyncIterable<ITask>, maxThreads = 0) {
     maxThreads = Math.max(0, maxThreads);
     /**
      * Код надо писать сюда
