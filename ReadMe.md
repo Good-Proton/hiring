@@ -2,7 +2,7 @@
 
 * Каждая отдельная задача выглядит следующим образом:
   ```
-  interface Task {
+  interface ITask {
     targetId: number
     action: 'init' | 'prepare' | 'work' | 'finalize' | 'cleanup'
   }
@@ -12,17 +12,17 @@
 
 * Есть специальный класс `Executor` (`src/Executor.ts`), который умеет исполнять одну задачу:
   ```
-  Executor.executeTask(task: Task): Promise<void>
+  Executor.executeTask(task: ITask): Promise<void>
   ```
 
   В решении нельзя использовать внутреннее состояние `Executor`, только `IExecutor.executeTask()`.
 
 Надо реализовать асинхронную функцию, которая получает на вход очередь
-задач `Iterable<Task>` и максимальное кол-во одновременных "потоков" `maxThreads` и возвращает промис, который будет разрезолвлен, когде все задачи
+задач `AsyncIterable<ITask>` и максимальное кол-во одновременных "потоков" `maxThreads` и возвращает промис, который будет разрезолвлен, когде все задачи
 отработают.
 
 ```
-async function run(queue: Queue, maxThreads = 0): Promise<{...}>
+async function run(executor: IExecutor, queue: AsyncIterable<ITask>, maxThreads = 0): Promise<{...}>
 ```
 При `maxThreads == 0` ограничения на кол-во одновременных "потоков" нету.
 
@@ -51,7 +51,7 @@ async function run(queue: Queue, maxThreads = 0): Promise<{...}>
 
 Критерий остановки исполнения функции `run()`: все полученные из очереди задачи выполнены и в очереди больше нету новых новых задач.
 
-Все задачи для одного и того же `Task.targetId` должны быть исполнены последовательно в том порядке, в котором они находятся в очереди.
+Все задачи для одного и того же `ITask.targetId` должны быть исполнены последовательно в том порядке, в котором они находятся в очереди.
 
 ## Настройка окружения:
 
