@@ -74,3 +74,12 @@ async function run(executor: IExecutor, queue: AsyncIterable<ITask>, maxThreads 
 `npm run test`
 
 Также тесты генерят детальные отчеты-логи `./test/*.log.html`.
+
+Если при выполнении тестов они зависают в таком состоянии, как ниже на скриншоте, то вероятно вы написали очень неоптимальный алгоритм, который вычитывает слишком много task-ов наперед (больше, чем это необходимо в моменте).
+
+<img width="369" alt="Code_O2bY8fy5hD" src="https://github.com/user-attachments/assets/50278778-01fc-40df-aeda-884de73e7577">
+
+
+У коректного решения `npm run test` дает следующий вывод:
+
+<img width="440" alt="Code_RLL5YHVeFu" src="https://github.com/user-attachments/assets/76743e2a-5fdb-4d19-8d3e-0a0a8f01c6b8">
